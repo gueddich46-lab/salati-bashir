@@ -21,6 +21,25 @@ openSheet=function(type){
  };
  }
 };
+
+// Tunisian governorate centers: manual selection changes coordinates, not only label.
+// GPS coordinates always take precedence when refreshed.
+const tunisianCenters={
+'تونس':[36.8065,10.1815],'أريانة':[36.8625,10.1956],'بن عروس':[36.7531,10.2189],'منوبة':[36.8080,10.0963],
+'نابل':[36.4561,10.7376],'زغوان':[36.4029,10.1429],'بنزرت':[37.2744,9.8739],'باجة':[36.7256,9.1817],
+'جندوبة':[36.5011,8.7802],'الكاف':[36.1742,8.7049],'سليانة':[36.0849,9.3708],'سوسة':[35.8256,10.63699],
+'المنستير':[35.7643,10.8113],'المهدية':[35.5047,11.0622],'صفاقس':[34.7406,10.7603],'القيروان':[35.6781,10.0963],
+'القصرين':[35.1676,8.8365],'سيدي بوزيد':[35.0382,9.4849],'قفصة':[34.425,8.7842],'توزر':[33.9197,8.1335],
+'قبلي':[33.7044,8.969],'قابس':[33.8815,10.0982],'مدنين':[33.3549,10.5055],'تطاوين':[32.9297,10.4518]};
+const previousOpenForCities=openSheet;
+openSheet=function(type){
+ previousOpenForCities(type);
+ if(type==='city'){
+ $('sheetBody').insertAdjacentHTML('beforeend','<label>اختيار ولاية تونسية — يغيّر المواقيت فعليًا</label><select id="tnCitySelect"><option value="">اختر الولاية</option>'+Object.keys(tunisianCenters).map(k=>'<option value="'+k+'">'+k+'</option>').join('')+'</select><p class="note">اختيار الولاية يستخدم إحداثيات مركزها؛ GPS أدق عند توفره.</p>');
+ const old=$('saveBtn').onclick;
+ $('saveBtn').onclick=()=>{const name=$('tnCitySelect').value;if(name){state.city=name;const p=tunisianCenters[name];state.coords={lat:p[0],lon:p[1],manual:true};state.method='tunisia';save();closeSheet();updateFromCoords();text();gpsMessage('تم تحديث المواقيت لإحداثيات '+name+'. قارنها بالتقويم الرسمي.')}else old()};
+ }
+};
 const splash=$('splash');$('enterApp').onclick=()=>{splash.classList.add('hide')};
 function gpsMessage(msg){$('gpsStatus').textContent=msg}
 // GPS native Android + offline astronomical estimates. Check against local authority.
@@ -41,7 +60,7 @@ function updateFromCoords(){if(!state.coords)return;let {lat,lon}=state.coords;
  let p=calcPrayer(Number(lat),Number(lon),new Date());if(!p){gpsMessage('تعذر حساب المواقيت لهذه الإحداثيات.');return}
  state.times=p.map((v,i)=>{const shift=Number((state.offsets||[])[i]||0);const a=v.split(':').map(Number);const total=((a[0]*60+a[1]+shift)%1440+1440)%1440;return String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0')});save();text();tick();$('demoLabel').textContent='حساب فلكي تقريبي';$('footerNote').textContent='تحقق من مواقيت الجهة الدينية المحلية. الأذان التلقائي غير مفعل.';
 }
-window.salatiNativeLocation=(lat,lon,accuracy,city)=>{state.coords={lat,lon,accuracy};if(city)state.city=placeAR[city]||city;save();updateFromCoords();$('cityLabel').textContent=state.city;gpsMessage('تم تحديد الموقع: '+state.city+' — تم تحديث المواقيت حسابيًا. طابقها مع التقويم المحلي.');};
+window.salatiNativeLocation=(lat,lon,accuracy,city)=>{state.coords={lat,lon,accuracy};if(city)state.city=placeAR[city]||city;state.coords.manual=false;save();updateFromCoords();$('cityLabel').textContent=state.city;gpsMessage('تم تحديد الموقع: '+state.city+' — تم تحديث المواقيت حسابيًا. طابقها مع التقويم المحلي.');};
 window.salatiNativeError=msg=>gpsMessage(msg);
 $('gpsBtn').onclick=()=>{gpsMessage('جارٍ تحديد الموقع...');if(window.AndroidLocation&&window.AndroidLocation.requestLocation){window.AndroidLocation.requestLocation();return}
  if(!navigator.geolocation){gpsMessage('الموقع غير متاح. افتح التطبيق عبر HTTPS أو APK.');return}
