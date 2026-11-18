@@ -58,13 +58,13 @@ function calcPrayer(lat,lon,date){
 }
 function updateFromCoords(){if(!state.coords)return;let {lat,lon}=state.coords;
  let p=calcPrayer(Number(lat),Number(lon),new Date());if(!p){gpsMessage('تعذر حساب المواقيت لهذه الإحداثيات.');return}
- state.times=p.map((v,i)=>{const shift=Number((state.offsets||[])[i]||0);const a=v.split(':').map(Number);const total=((a[0]*60+a[1]+shift)%1440+1440)%1440;return String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0')});save();text();tick();$('demoLabel').textContent='حساب فلكي تقريبي';$('footerNote').textContent='تحقق من مواقيت الجهة الدينية المحلية. الأذان التلقائي غير مفعل.';
+ state.times=p.map((v,i)=>{const shift=Number((state.offsets||[])[i]||0);const a=v.split(':').map(Number);const total=((a[0]*60+a[1]+shift)%1440+1440)%1440;return String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0')});save();text();tick();$('demoLabel').textContent='حساب فلكي حسب الموقع والتاريخ';$('footerNote').textContent='تحقق من مواقيت الجهة الدينية المحلية. الأذان التلقائي غير مفعل.';
 }
 window.salatiNativeLocation=(lat,lon,accuracy,city,country)=>{state.coords={lat,lon,accuracy};if(city)state.city=placeAR[city]||city;state.coords.manual=false;if(country){state.country=country;const automatic={TN:'tunisia',EG:'egypt',SA:'ummalqura',PK:'karachi',IN:'karachi',US:'isna',CA:'isna',FR:'mwl',DE:'mwl',GB:'mwl'};if(state.autoMethod!==false&&automatic[country])state.method=automatic[country];}save();updateFromCoords();$('cityLabel').textContent=state.city;gpsMessage('تم تحديد الموقع: '+state.city+' — تم تحديث المواقيت حسابيًا. طابقها مع التقويم المحلي.');};
 window.salatiNativeError=msg=>gpsMessage(msg);
 $('gpsBtn').onclick=()=>{gpsMessage('جارٍ تحديد الموقع...');if(window.AndroidLocation&&window.AndroidLocation.requestLocation){window.AndroidLocation.requestLocation();return}
  if(!navigator.geolocation){gpsMessage('الموقع غير متاح. افتح التطبيق عبر HTTPS أو APK.');return}
  navigator.geolocation.getCurrentPosition(p=>window.salatiNativeLocation(p.coords.latitude,p.coords.longitude,p.coords.accuracy,''),e=>gpsMessage('تعذر تحديد الموقع: '+e.message),{enableHighAccuracy:true,timeout:30000});};
-if(state.coords){updateFromCoords();gpsMessage('تم استرجاع الموقع المحفوظ. اضغط GPS لتحديثه.')}
-text();tick();setInterval(tick,1000);let previousDay=new Date().toDateString();setInterval(()=>{let day=new Date().toDateString();if(day!==previousDay){previousDay=day;updateFromCoords()}},60000);
+if(!state.coords){state.coords={lat:36.8065,lon:10.1815,manual:true};state.city='تونس';state.country='TN';save();}updateFromCoords();gpsMessage('المواقيت محسوبة لإحداثيات '+state.city+'؛ اضغط GPS لتحديد موقعك بدقة.');
+text();tick();setInterval(tick,1000);let previousDay=new Date().toDateString();document.addEventListener('visibilitychange',()=>{if(!document.hidden){const day=new Date().toDateString();if(day!==previousDay){previousDay=day;updateFromCoords()}tick()}});setInterval(()=>{let day=new Date().toDateString();if(day!==previousDay){previousDay=day;updateFromCoords()}},60000);
 </script></body></html>
