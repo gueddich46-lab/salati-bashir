@@ -40,7 +40,7 @@ openSheet=function(type){
  $('saveBtn').onclick=()=>{const name=$('tnCitySelect').value;if(name){state.city=name;const p=tunisianCenters[name];state.coords={lat:p[0],lon:p[1],manual:true};state.method='tunisia';save();closeSheet();updateFromCoords();text();gpsMessage('تم تحديث المواقيت لإحداثيات '+name+'. قارنها بالتقويم الرسمي.')}else old()};
  }
 };
-const splash=$('splash');$('enterApp').onclick=()=>{splash.classList.add('hide')};
+const splash=$('splash');$('enterApp').onclick=()=>{splash.classList.add('hide');if(window.AndroidLocation&&window.AndroidLocation.requestLocation){gpsMessage('جارٍ تحديث الموقع والمواقيت تلقائيًا...');window.AndroidLocation.requestLocation()}};
 function gpsMessage(msg){$('gpsStatus').textContent=msg}
 // GPS native Android + offline astronomical estimates. Check against local authority.
 const placeAR={'Gafsa':'قفصة','Tunis':'تونس','Sfax':'صفاقس','Sousse':'سوسة','Ariana':'أريانة','Sukrah':'سكرة','La Soukra':'سكرة','Kairouan':'القيروان','Gabes':'قابس','Kasserine':'القصرين','Tozeur':'توزر','Kebili':'قبلي','Monastir':'المنستير','Mahdia':'المهدية','Nabeul':'نابل','Bizerte':'بنزرت','Beja':'باجة','Jendouba':'جندوبة','Siliana':'سليانة','Zaghouan':'زغوان','Sidi Bouzid':'سيدي بوزيد','Ben Arous':'بن عروس','Manouba':'منوبة','Tataouine':'تطاوين','Paris':'باريس','London':'لندن'};
