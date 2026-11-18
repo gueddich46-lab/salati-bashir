@@ -31,13 +31,21 @@ const tunisianCenters={
 'المنستير':[35.7643,10.8113],'المهدية':[35.5047,11.0622],'صفاقس':[34.7406,10.7603],'القيروان':[35.6781,10.0963],
 'القصرين':[35.1676,8.8365],'سيدي بوزيد':[35.0382,9.4849],'قفصة':[34.425,8.7842],'توزر':[33.9197,8.1335],
 'قبلي':[33.7044,8.969],'قابس':[33.8815,10.0982],'مدنين':[33.3549,10.5055],'تطاوين':[32.9297,10.4518]};
+// Choosing a Tunisian governorate immediately selects its center and recalculates times.
+function selectTunisianGovernorate(name){
+ const p=tunisianCenters[name];if(!p)return;
+ state.city=name;state.country='TN';state.coords={lat:p[0],lon:p[1],manual:true};
+ if(state.autoMethod!==false)state.method='tunisia';
+ save();closeSheet();updateFromCoords();
+ gpsMessage('تم حساب مواقيت '+name+' حسب إحداثيات مركز الولاية وتاريخ اليوم. هذه نتائج فلكية غير متحقق من مطابقتها للوزارة.');
+}
 const previousOpenForCities=openSheet;
 openSheet=function(type){
  previousOpenForCities(type);
  if(type==='city'){
  $('sheetBody').insertAdjacentHTML('beforeend','<label>اختيار ولاية تونسية — يغيّر المواقيت فعليًا</label><select id="tnCitySelect"><option value="">اختر الولاية</option>'+Object.keys(tunisianCenters).map(k=>'<option value="'+k+'">'+k+'</option>').join('')+'</select><p class="note">اختيار الولاية يستخدم إحداثيات مركزها؛ GPS أدق عند توفره.</p>');
  const old=$('saveBtn').onclick;
- $('saveBtn').onclick=()=>{const name=$('tnCitySelect').value;if(name){state.city=name;const p=tunisianCenters[name];state.coords={lat:p[0],lon:p[1],manual:true};state.method='tunisia';state.country='TN';state.autoMethod=true;save();closeSheet();updateFromCoords();text();gpsMessage('تم تحديث المواقيت لإحداثيات '+name+'. قارنها بالتقويم الرسمي.')}else old()};
+ $('saveBtn').onclick=()=>{const name=$('tnCitySelect').value;if(name){selectTunisianGovernorate(name)}else old()};
  }
 };
 const splash=$('splash');$('enterApp').onclick=()=>{splash.classList.add('hide');if(window.AndroidLocation&&window.AndroidLocation.requestLocation){gpsMessage('جارٍ تحديث الموقع والمواقيت تلقائيًا...');window.AndroidLocation.requestLocation()}};
