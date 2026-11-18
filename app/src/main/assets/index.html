@@ -13,11 +13,11 @@ openSheet=function(type){
  if(type==='settings'){
  const el=$('sheetBody');
  el.insertAdjacentHTML('beforeend',`<label>طريقة حساب المواقيت</label><select id="methodInput"><option value="tunisia">تونس — إعداد أولي قابل للتعديل</option><option value="mwl">رابطة العالم الإسلامي (MWL)</option><option value="egypt">الهيئة المصرية العامة للمساحة</option><option value="karachi">جامعة العلوم الإسلامية كراتشي</option><option value="isna">الجمعية الإسلامية لأمريكا الشمالية (ISNA)</option><option value="ummalqura">أم القرى — زوايا تقريبية</option><option value="custom">زوايا مخصصة</option></select><label>زاوية الفجر المخصصة</label><input id="fajrAngleInput" type="number" min="0" max="30" step="0.5" value="${Number(state.fajrAngle||18)}"><label>زاوية العشاء المخصصة</label><input id="ishaAngleInput" type="number" min="0" max="30" step="0.5" value="${Number(state.ishaAngle||18)}"><label>حساب العصر</label><select id="asrSchoolInput"><option value="standard">مالكي / شافعي / حنبلي</option><option value="hanafi">حنفي</option></select><label>تصحيح الدقائق لكل صلاة (يمكن إدخال قيمة سالبة)</label>${names.ar.map((n,i)=>`<label>${n}</label><input type="number" id="offset${i}" min="-120" max="120" value="${Number((state.offsets||[])[i]||0)}">`).join('')}<label>الصوت الافتراضي للأذان</label><select id="adhanVoiceInput"><option value="none">بدون صوت — تنبيهات مستقبلية</option><option value="makkah">أذان مكة — يحتاج ملف صوت</option><option value="madinah">أذان المدينة — يحتاج ملف صوت</option></select><label><input type="checkbox" id="silentSunriseInput"> وضع صامت عند الشروق</label><label><input type="checkbox" id="fridayInput"> إعداد خاص بصلاة الجمعة</label><p class="note">اختيار الصوت والصمت والجمعة محفوظ فقط؛ لا توجد خدمة تنبيه خلفية بعد. طرق الحساب هنا إعدادات أولية وليست مطابقة معتمدة لكل دولة. يلزم اختبارها مقابل التقويم المحلي.</p>`);
- $('methodInput').value=state.method||'tunisia';$('asrSchoolInput').value=state.asrSchool||'standard';$('adhanVoiceInput').value=state.adhanVoice||'none';$('silentSunriseInput').checked=!!state.silentSunrise;$('fridayInput').checked=!!state.fridayMode;
+ el.insertAdjacentHTML('beforeend','<label><input type="checkbox" id="autoMethodInput"> اختيار طريقة الحساب تلقائيًا حسب البلد</label><p class="note">الدول المدعومة حاليًا: تونس ومصر والسعودية وباكستان والهند والولايات المتحدة وكندا وفرنسا وألمانيا وبريطانيا. باقي الدول تتطلب اختيارًا يدويًا. الاختيار التقريبي ليس اعتمادًا رسميًا.</p>');$('autoMethodInput').checked=state.autoMethod!==false;$('methodInput').value=state.method||'tunisia';$('asrSchoolInput').value=state.asrSchool||'standard';$('adhanVoiceInput').value=state.adhanVoice||'none';$('silentSunriseInput').checked=!!state.silentSunrise;$('fridayInput').checked=!!state.fridayMode;
  const prev=$('saveBtn').onclick;
  $('saveBtn').onclick=()=>{
  const method=$('methodInput').value,asr=$('asrSchoolInput').value,fa=Number($('fajrAngleInput').value),ia=Number($('ishaAngleInput').value),offsets=names.ar.map((_,i)=>Math.max(-120,Math.min(120,Number($('offset'+i).value)||0))),voice=$('adhanVoiceInput').value,sun=$('silentSunriseInput').checked,fri=$('fridayInput').checked;
- prev();state.method=method;state.asrSchool=asr;state.fajrAngle=Math.max(0,Math.min(30,fa||18));state.ishaAngle=Math.max(0,Math.min(30,ia||18));state.offsets=offsets;state.adhanVoice=voice;state.silentSunrise=sun;state.fridayMode=fri;save();updateFromCoords();
+ prev();state.method=method;state.autoMethod=$('autoMethodInput').checked;state.asrSchool=asr;state.fajrAngle=Math.max(0,Math.min(30,fa||18));state.ishaAngle=Math.max(0,Math.min(30,ia||18));state.offsets=offsets;state.adhanVoice=voice;state.silentSunrise=sun;state.fridayMode=fri;save();updateFromCoords();
  };
  }
 };
@@ -37,7 +37,7 @@ openSheet=function(type){
  if(type==='city'){
  $('sheetBody').insertAdjacentHTML('beforeend','<label>اختيار ولاية تونسية — يغيّر المواقيت فعليًا</label><select id="tnCitySelect"><option value="">اختر الولاية</option>'+Object.keys(tunisianCenters).map(k=>'<option value="'+k+'">'+k+'</option>').join('')+'</select><p class="note">اختيار الولاية يستخدم إحداثيات مركزها؛ GPS أدق عند توفره.</p>');
  const old=$('saveBtn').onclick;
- $('saveBtn').onclick=()=>{const name=$('tnCitySelect').value;if(name){state.city=name;const p=tunisianCenters[name];state.coords={lat:p[0],lon:p[1],manual:true};state.method='tunisia';save();closeSheet();updateFromCoords();text();gpsMessage('تم تحديث المواقيت لإحداثيات '+name+'. قارنها بالتقويم الرسمي.')}else old()};
+ $('saveBtn').onclick=()=>{const name=$('tnCitySelect').value;if(name){state.city=name;const p=tunisianCenters[name];state.coords={lat:p[0],lon:p[1],manual:true};state.method='tunisia';state.country='TN';save();closeSheet();updateFromCoords();text();gpsMessage('تم تحديث المواقيت لإحداثيات '+name+'. قارنها بالتقويم الرسمي.')}else old()};
  }
 };
 const splash=$('splash');$('enterApp').onclick=()=>{splash.classList.add('hide');if(window.AndroidLocation&&window.AndroidLocation.requestLocation){gpsMessage('جارٍ تحديث الموقع والمواقيت تلقائيًا...');window.AndroidLocation.requestLocation()}};
@@ -50,7 +50,7 @@ function calcPrayer(lat,lon,date){
  const eq=229.18*(0.000075+0.001868*Math.cos(g)-0.032077*Math.sin(g)-0.014615*Math.cos(2*g)-0.040849*Math.sin(2*g));
  const dec=0.006918-0.399912*Math.cos(g)+0.070257*Math.sin(g)-0.006758*Math.cos(2*g)+0.000907*Math.sin(2*g)-0.002697*Math.cos(3*g)+0.00148*Math.sin(3*g);
  const method=state.method||'tunisia';const presets={tunisia:[18,18],mwl:[18,17],egypt:[19.5,17.5],karachi:[18,18],isna:[15,15],ummalqura:[18,18.5],custom:[Number(state.fajrAngle||18),Number(state.ishaAngle||18)]};const angles=presets[method]||presets.tunisia;const ha=alt=>{let v=(Math.sin(alt*r)-Math.sin(lat*r)*Math.sin(dec))/(Math.cos(lat*r)*Math.cos(dec));return Math.abs(v)>1?null:Math.acos(v)/r};
- const tz=-date.getTimezoneOffset(),mid=720-4*lon-eq+tz,hSun=ha(-.833),hFajr=ha(-angles[0]),hIsha=ha(-angles[1]);
+ const tz=(state.country==='TN'?60:-date.getTimezoneOffset()),mid=720-4*lon-eq+tz,hSun=ha(-.833),hFajr=ha(-angles[0]),hIsha=ha(-angles[1]);
  const asrAlt=Math.atan(1/((state.asrSchool==='hanafi'?2:1)+Math.tan(Math.abs(lat*r-dec))))/r,hAsr=ha(asrAlt);
  if([hSun,hFajr,hIsha,hAsr].some(x=>x===null))return null;
  const m=[mid-4*hFajr,mid-4*hSun,mid,mid+4*hAsr,mid+4*hSun,mid+4*hIsha];
@@ -60,7 +60,7 @@ function updateFromCoords(){if(!state.coords)return;let {lat,lon}=state.coords;
  let p=calcPrayer(Number(lat),Number(lon),new Date());if(!p){gpsMessage('تعذر حساب المواقيت لهذه الإحداثيات.');return}
  state.times=p.map((v,i)=>{const shift=Number((state.offsets||[])[i]||0);const a=v.split(':').map(Number);const total=((a[0]*60+a[1]+shift)%1440+1440)%1440;return String(Math.floor(total/60)).padStart(2,'0')+':'+String(total%60).padStart(2,'0')});save();text();tick();$('demoLabel').textContent='حساب فلكي تقريبي';$('footerNote').textContent='تحقق من مواقيت الجهة الدينية المحلية. الأذان التلقائي غير مفعل.';
 }
-window.salatiNativeLocation=(lat,lon,accuracy,city)=>{state.coords={lat,lon,accuracy};if(city)state.city=placeAR[city]||city;state.coords.manual=false;save();updateFromCoords();$('cityLabel').textContent=state.city;gpsMessage('تم تحديد الموقع: '+state.city+' — تم تحديث المواقيت حسابيًا. طابقها مع التقويم المحلي.');};
+window.salatiNativeLocation=(lat,lon,accuracy,city,country)=>{state.coords={lat,lon,accuracy};if(city)state.city=placeAR[city]||city;state.coords.manual=false;if(country){state.country=country;const automatic={TN:'tunisia',EG:'egypt',SA:'ummalqura',PK:'karachi',IN:'karachi',US:'isna',CA:'isna',FR:'mwl',DE:'mwl',GB:'mwl'};if(state.autoMethod!==false&&automatic[country])state.method=automatic[country];}save();updateFromCoords();$('cityLabel').textContent=state.city;gpsMessage('تم تحديد الموقع: '+state.city+' — تم تحديث المواقيت حسابيًا. طابقها مع التقويم المحلي.');};
 window.salatiNativeError=msg=>gpsMessage(msg);
 $('gpsBtn').onclick=()=>{gpsMessage('جارٍ تحديد الموقع...');if(window.AndroidLocation&&window.AndroidLocation.requestLocation){window.AndroidLocation.requestLocation();return}
  if(!navigator.geolocation){gpsMessage('الموقع غير متاح. افتح التطبيق عبر HTTPS أو APK.');return}
